@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1 class="site-title">Photo Gallery</h1>
+    <p class="site-subtitle">A quiet archive of moments, grouped by month.</p>
+  </header>
+
+  <nav class="filters" id="filters" aria-label="Filter photos"></nav>
+
+  <main class="gallery-wrap">
+    <div class="empty-state" id="emptyState" hidden>
+      <p>No photos to show yet.</p>
+      <span>Drop images into <code>./images</code> and run <code>python3 organize_photos.py</code>, then refresh.</span>
+    </div>
+    <div id="gallery" class="gallery"></div>
+  </main>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous photo">&#8249;</button>
+    <figure class="lightbox-figure">
+      <img id="lightboxImg" src="" alt="">
+      <figcaption class="lightbox-caption" id="lightboxCaption"></figcaption>
+    </figure>
+    <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next photo">&#8250;</button>
+  </div>
+
+  <script src="gallery.js"></script>
+</body>
+</html>
