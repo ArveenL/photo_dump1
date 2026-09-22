@@ -71,13 +71,15 @@ def exif_date_exifread(path: Path) -> str | None:
 
 def exif_date_pillow(path: Path) -> str | None:
     try:
+        import warnings
         from PIL import Image
-        from PIL.ExifTags import TAGS
     except ImportError:
         return None
     try:
-        with Image.open(path) as img:
-            exif = img.getexif()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with Image.open(path) as img:
+                exif = img.getexif()
     except Exception:
         return None
     if not exif:
