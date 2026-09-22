@@ -2,22 +2,119 @@
   "use strict";
 
   var galleryEl = document.getElementById("gallery");
-  var filtersEl = document.getElementById("filters");
+  var backBtn = document.getElementById("backBtn");
   var emptyState = document.getElementById("emptyState");
 
   var lightbox = document.getElementById("lightbox");
   var lightboxImg = document.getElementById("lightboxImg");
   var lightboxCaption = document.getElementById("lightboxCaption");
 
-  var photos = []; // { src, albumKey, albumLabel }
-  var filtered = [];
+  var folders = []; // { key, label, photos: [] }
+  var currentFolder = null;
+  var currentPhotos = [];
   var currentIndex = -1;
-  var activeFilter = "all";
 
-  function escaped(text) {
-    var div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
+  function groupEl(label, photos) {
+    var albumEl = document.createElement("section");
+    albumEl.className = "album";
+
+    var title = document.createElement("h2");
+    title.className = "album-title";
+    title.textContent = label;
+
+    var count = document.createElement("span");
+    count.className = "album-count";
+    count.textContent = photos.length + " photo" + (photos.length === 1 ? "" : "s");
+    title.appendChild(count);
+
+    var grid = document.createElement("div");
+    grid.className = "gallery";
+
+    photos.forEach(function (photo, index) {
+      var item = document.createElement("div");
+      item.className = "photo";
+
+      var img = document.createElement("img");
+      img.setAttribute("src", photo.src);
+      img.setAttribute("alt", "Photo");
+      img.setAttribute("loading", "lazy");
+      img.setAttribute("decoding", "async");
+
+      item.appendChild(img);
+      item.addEventListener("click", function () {
+        openLightboxAt(photos, index);
+      });
+      grid.appendChild(item);
+    });
+
+    albumEl.appendChild(title);
+    albumEl.appendChild(grid);
+    return albumEl;
+  }
+
+  function setBackVisible(visible) {
+    backBtn.hidden = !visible;
+  }
+
+  function renderFolders() {
+    currentFolder = null;
+    galleryEl.innerHTML = "";
+    galleryEl.classList.add("folder-grid");
+    setBackVisible(false);
+
+    folders.forEach(function (folder) {
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "folder-card";
+
+      var name = document.createElement("span");
+      name.className = "folder-name";
+      name.textContent = folder.label;
+
+      var count = document.createElement("span");
+      count.className = "folder-count";
+      count.textContent = folder.photos.length + " photo" + (folder.photos.length === 1 ? "" : "s");
+
+      card.appendChild(name);
+      card.appendChild(count);
+      card.addEventListener("click", function () { openFolder(folder); });
+      galleryEl.appendChild(card);
+    });
+  }
+
+  function openFolder(folder) {
+    currentFolder = folder;
+    galleryEl.classList.remove("folder-grid");
+    galleryEl.innerHTML = "";
+    setBackVisible(true);
+    galleryEl.appendChild(groupEl(folder.label, folder.photos));
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function build(albums, uncategorized) {
+    if (!albums || !albums.length) {
+      if (!uncategorized || !uncategorized.length) {
+        showEmpty("No photos to show yet.", "Drop images into ./images and run python3 organize_photos.py, then refresh.");
+        return;
+      }
+    }
+
+    albums.forEach(function (album) {
+      var photos = album.photos.map(function (src) {
+        return { src: src };
+      });
+      folders.push({ key: album.key, label: album.label, photos: photos });
+    });
+
+    if (uncategorized && uncategorized.length) {
+      folders.push({
+        key: "uncategorized",
+        label: "Uncategorized",
+        photos: uncategorized.map(function (src) { return { src: src }; }),
+      });
+    }
+
+    renderFolders();
   }
 
   function showEmpty(message, hint) {
@@ -26,151 +123,8 @@
     emptyState.hidden = false;
   }
 
-  function build(albums, uncategorized) {
-    var albumKeys = [];
-
-    albums.forEach(function (album) {
-      albumKeys.push(album.key);
-      album.photos.forEach(function (src) {
-        photos.push({ src: src, albumKey: album.key, albumLabel: album.label });
-      });
-    });
-
-    if (uncategorized && uncategorized.length) {
-      albumKeys.push("uncategorized");
-      uncategorized.forEach(function (src) {
-        photos.push({ src: src, albumKey: "uncategorized", albumLabel: "Uncategorized" });
-      });
-    }
-
-    renderFilters(albumKeys);
-
-    if (!photos.length) {
-      showEmpty("No photos to show yet.", "Drop images into ./images and run python3 organize_photos.py, then refresh.");
-      return;
-    }
-
-    applyFilter("all");
-  }
-
-  function renderFilters(albumKeys) {
-    var filters = [{ key: "all", label: "All" }];
-    albumKeys.forEach(function (key) {
-      filters.push({ key: key, label: key });
-    });
-
-    filters.forEach(function (f) {
-      var button = document.createElement("button");
-      button.type = "button";
-      button.textContent = f.label;
-      button.dataset.filter = f.key;
-      if (f.key === "all") button.classList.add("active");
-
-      button.addEventListener("click", function () {
-        applyFilter(f.key);
-        document.querySelectorAll("#filters button").forEach(function (b) {
-          b.classList.toggle("active", b === button);
-        });
-      });
-
-      filtersEl.appendChild(button);
-    });
-  }
-
-  function applyFilter(key) {
-    activeFilter = key;
-
-    if (key === "all") {
-      filtered = photos.slice();
-    } else {
-      filtered = photos.filter(function (p) {
-        return p.albumKey === key;
-      });
-    }
-
-    renderGallery();
-
-    if (key === "all") {
-      galleryEl
-        .querySelectorAll(".album")
-        .forEach(function (albumEl) { albumEl.style.display = ""; });
-    } else {
-      galleryEl
-        .querySelectorAll(".album")
-        .forEach(function (albumEl) {
-          albumEl.style.display = albumEl.dataset.albumKey === key ? "" : "none";
-        });
-    }
-  }
-
-  function albumTitle(section) {
-    var title = document.createElement("div");
-    title.className = "album-title";
-    title.innerHTML =
-      escaped(section.label) +
-      ' <span class="album-count">' +
-      section.photos.length +
-      " photo" +
-      (section.photos.length === 1 ? "" : "s") +
-      "</span>";
-    return title;
-  }
-
-  function renderGallery() {
-    galleryEl.innerHTML = "";
-
-    var sections = [];
-    var seen = {};
-
-    filtered.forEach(function (photo) {
-      if (!seen[photo.albumKey]) {
-        seen[photo.albumKey] = { label: photo.albumLabel, photos: [] };
-        sections.push(seen[photo.albumKey]);
-      }
-      seen[photo.albumKey].photos.push(photo);
-    });
-
-    if (!sections.length) {
-      galleryEl.style.display = "none";
-      showEmpty("No photos match this filter.", "");
-      return;
-    }
-
-    galleryEl.style.display = "";
-    emptyState.hidden = true;
-
-    sections.forEach(function (section) {
-      var albumEl = document.createElement("section");
-      albumEl.className = "album";
-      albumEl.dataset.albumKey = section.photos[0].albumKey;
-
-      if (activeFilter === "all") albumEl.appendChild(albumTitle(section));
-
-      var grid = document.createElement("div");
-      grid.className = "gallery";
-
-      section.photos.forEach(function (photo, indexInSection) {
-        var item = document.createElement("div");
-        item.className = "photo";
-
-        var img = document.createElement("img");
-        img.setAttribute("src", photo.src);
-        img.setAttribute("alt", photo.albumLabel + " photo");
-        img.setAttribute("loading", "lazy");
-        img.setAttribute("decoding", "async");
-
-        item.appendChild(img);
-        item.addEventListener("click", function () { openLightbox(indexInSection, section.photos); });
-        grid.appendChild(item);
-      });
-
-      albumEl.appendChild(grid);
-      galleryEl.appendChild(albumEl);
-    });
-  }
-
-  function openLightbox(index, collection) {
-    filtered = collection;
+  function openLightboxAt(photos, index) {
+    currentPhotos = photos;
     currentIndex = index;
     updateLightbox();
     lightbox.classList.add("open");
@@ -180,14 +134,14 @@
   }
 
   function step(offset) {
-    currentIndex = (currentIndex + offset + filtered.length) % filtered.length;
+    currentIndex = (currentIndex + offset + currentPhotos.length) % currentPhotos.length;
     updateLightbox();
   }
 
   function updateLightbox() {
-    var photo = filtered[currentIndex];
+    var photo = currentPhotos[currentIndex];
     lightboxImg.src = photo.src;
-    lightboxCaption.textContent = photo.albumLabel;
+    lightboxCaption.textContent = currentFolder ? currentFolder.label : "";
   }
 
   function closeLightbox() {
@@ -196,6 +150,8 @@
     document.body.style.overflow = "";
     lightboxImg.src = "";
   }
+
+  backBtn.addEventListener("click", renderFolders);
 
   lightboxClose.addEventListener("click", closeLightbox);
   lightboxNext.addEventListener("click", function () { step(1); });
@@ -206,13 +162,13 @@
   });
 
   document.addEventListener("keydown", function (event) {
-    if (!lightbox.classList.contains("open")) {
-      if (event.key === "Escape" && document.activeElement.tagName === "BUTTON") applyFilter("all");
+    if (lightbox.classList.contains("open")) {
+      if (event.key === "Escape") closeLightbox();
+      if (event.key === "ArrowRight") step(1);
+      if (event.key === "ArrowLeft") step(-1);
       return;
     }
-    if (event.key === "Escape") closeLightbox();
-    if (event.key === "ArrowRight") step(1);
-    if (event.key === "ArrowLeft") step(-1);
+    if (event.key === "Escape" && currentFolder) renderFolders();
   });
 
   fetch("gallery-data.json", { cache: "no-store" })

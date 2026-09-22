@@ -13,15 +13,17 @@
   <header class="site-header">
     <h1 class="site-title">Photo Dump!</h1>
     <p class="site-subtitle">Grouped by month &amp; year</p>
-    <nav class="filters" id="filters" aria-label="Filter photos"></nav>
   </header>
 
   <main class="gallery-wrap">
+    <div class="topbar">
+      <button type="button" id="backBtn" class="back-btn" hidden>&#8592; All folders</button>
+    </div>
     <div class="empty-state" id="emptyState" hidden>
       <p>No photos to show yet.</p>
       <span>Drop images into <code>./images</code> and run <code>python3 organize_photos.py</code>, then refresh.</span>
     </div>
-    <div id="gallery" class="gallery"></div>
+    <div id="gallery"></div>
   </main>
 
   <div class="lightbox" id="lightbox" aria-hidden="true">
