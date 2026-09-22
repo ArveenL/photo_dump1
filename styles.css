@@ -29,8 +29,14 @@ body {
 }
 
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   text-align: center;
-  padding: 64px 20px 8px;
+  padding: 32px 20px 14px;
 }
 
 .site-title {
@@ -51,10 +57,7 @@ body {
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  padding: 32px 20px 8px;
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  padding-top: 18px;
 }
 
 .filters button {
@@ -277,6 +280,63 @@ body {
 }
 
 @media (max-width: 640px) {
+  .site-header {
+    padding: 20px 12px 10px;
+  }
+
+  .site-title {
+    font-size: 1.5rem;
+  }
+
+  .site-subtitle {
+    font-size: 0.875rem;
+    margin: 6px 0 0;
+  }
+
+  .filters {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    padding: 14px 2px 4px;
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filters button {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    padding: 8px 14px;
+  }
+
+  .gallery-wrap {
+    padding: 16px 12px 64px;
+  }
+
+  .album {
+    margin-bottom: 28px;
+  }
+
+  .album-title {
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+  }
+
+  .gallery {
+    column-gap: 8px;
+  }
+
+  .photo {
+    margin-bottom: 8px;
+  }
+
   .lightbox-nav {
     width: 40px;
     height: 56px;
