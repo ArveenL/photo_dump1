@@ -153,6 +153,12 @@
 
   backBtn.addEventListener("click", renderFolders);
 
+  var homeBtn = document.getElementById("homeBtn");
+  homeBtn.addEventListener("click", function () {
+    renderFolders();
+    window.scrollTo({ top: 0, behavior: "auto" });
+  });
+
   lightboxClose.addEventListener("click", closeLightbox);
   lightboxNext.addEventListener("click", function () { step(1); });
   lightboxPrev.addEventListener("click", function () { step(-1); });
